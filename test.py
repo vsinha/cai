@@ -1,11 +1,16 @@
 #!/usr/bin/env python
-import cairo
 import math
 import random
-from math import pi, sin, cos
+from functools import partial
+from math import cos, pi, sin
 
-width = w = 3508
-height = h = 3508
+import cairo
+import numpy as np
+
+import src.vector as vector
+
+width = w = 2500
+height = h = 2500
 bg = (100 / 255.0, 80 / 255.0, 80 / 255.0)
 
 s = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
@@ -68,8 +73,72 @@ def draw_arc_lines(center, t1, t2, incr):
                 draw_line(c, (1, 1, 1), start, end, 0.2)
 
 
-draw_arc_lines((0, 0), 0, 2 * pi, 200)
-draw_arc_lines((w / 2, h / 2), 0, 2 * pi, 200)
+# draw_arc_lines((0, 0), 0, 2 * pi, 200)
+# draw_arc_lines((w / 2, h / 2), 0, 2 * pi, 200)
+
+white = (1, 1, 1)
+# start = (0, height / 2)
+# end = (width, height / 2)
+# draw_line(c, white, start, end, 2)
+
+# for i in range(1, 20):
+#     ray_start = (100, 100)
+#     # direction = vector.direction(ray_start, (0, 1))
+#     direction = vector.norm((cos(2 * math.pi / i), sin(2 * math.pi / i)))
+#     intersects = vector.intersect_ray_vector(ray_start, direction, start, end)
+#     if len(intersects) == 1:
+#         print("(i = %d) Found intersection at %s" % (i, intersects[0]))
+#         ray_end = intersects[0]
+#         draw_line(c, white, ray_start, ray_end, 4)
+
+
+def dist_sq(p0, p1):
+    return (p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2
+
+
+def dist(p0, p1):
+    return math.sqrt(dist_sq(p0, p1))
+
+
+lines = []
+
+num_bars = 30
+for i in range(0, num_bars):
+    if i % 2 == 0:
+        continue
+
+    i = i * width / num_bars
+
+    start = (i, 0)
+    end = (i, height)
+    draw_line(c, white, start, end, 0.5)
+    lines.append((start, end))
+
+for i in range(0, 1000):
+    start = (int(random.uniform(0, width)), int(random.uniform(0, height)))
+    direction = vector.norm(np.array([random.uniform(0, 1), random.uniform(-1, 1)]))
+    intersects = []
+    for (p0, p1) in lines:
+        found = vector.intersect_ray_vector(start, direction, p0, p1)
+        if len(found) > 0:
+            # print("found", found[0])
+            intersects.append(found[0])
+    line_and_len = [(dist(start, end), end) for end in intersects]
+    # print("line_and_len 0", line_and_len)
+    max_length = 300
+    line_and_len = [
+        (length, end) for (length, end) in line_and_len if length < max_length
+    ]
+    if len(line_and_len) > 0:
+        line_and_len.sort(key=lambda x: x[0])
+        end = line_and_len[0][1]
+        # print("Found intersection from %s to %s" % (start, line_and_len))
+        draw_line(c, white, start, end, 2)
+    # else:
+    #     end = start + np.array(direction) * max_length
+    #     # print("end", end)
+    #     draw_line(c, white, start, end, 1)
+    # lines.append((start, end))
 
 
 if __name__ == "__main__":
