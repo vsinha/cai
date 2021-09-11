@@ -77,19 +77,6 @@ def draw_arc_lines(center, t1, t2, incr):
 # draw_arc_lines((w / 2, h / 2), 0, 2 * pi, 200)
 
 white = (1, 1, 1)
-# start = (0, height / 2)
-# end = (width, height / 2)
-# draw_line(c, white, start, end, 2)
-
-# for i in range(1, 20):
-#     ray_start = (100, 100)
-#     # direction = vector.direction(ray_start, (0, 1))
-#     direction = vector.norm((cos(2 * math.pi / i), sin(2 * math.pi / i)))
-#     intersects = vector.intersect_ray_vector(ray_start, direction, start, end)
-#     if len(intersects) == 1:
-#         print("(i = %d) Found intersection at %s" % (i, intersects[0]))
-#         ray_end = intersects[0]
-#         draw_line(c, white, ray_start, ray_end, 4)
 
 
 def dist_sq(p0, p1):
@@ -101,22 +88,29 @@ def dist(p0, p1):
 
 
 lines = []
-num_bars = 20
-for i in range(0, num_bars):
-    if i % 2 == 0:
-        continue
 
-    i = i * width / num_bars
 
-    start = (i, 0)
-    end = (i, height)
-    draw_line(c, white, start, end, 0.5)
-    lines.append((start, end))
+def draw_grid(num_bars):
+    for i in range(0, num_bars):
+        if i % 2 == 0:
+            continue
 
-    start = (0, i)
-    end = (width, i)
-    draw_line(c, white, start, end, 0.5)
-    lines.append((start, end))
+        i = i * width / num_bars
+
+        start = (i, 0)
+        end = (i, height)
+        draw_line(c, white, start, end, 0.5)
+        lines.append((start, end))
+
+        start = (0, i)
+        end = (width, i)
+        draw_line(c, white, start, end, 0.5)
+        lines.append((start, end))
+
+
+def draw_ray(start, direction, length):
+    end = start + np.array(direction) * length
+    draw_line(c, white, start, end, 2)
 
 
 def draw_ray_with_collisions(start, direction, max_length):
@@ -138,11 +132,16 @@ def draw_ray_with_collisions(start, direction, max_length):
         draw_line(c, white, start, end, 2)
 
 
-def starburst(start, radius, num_lines):
+def starburst(start, radius, num_lines, draw_only_collisions=False):
     for i in range(0, num_lines):
         direction = (cos(2 * pi * i / num_lines), sin(2 * pi * i / num_lines))
-        draw_ray_with_collisions(start, direction, radius)
+        if draw_only_collisions:
+            draw_ray_with_collisions(start, direction, radius)
+        else:
+            draw_ray(start, direction, radius)
 
+
+draw_grid(10)
 
 for i in range(0, 100):
     starburst(
