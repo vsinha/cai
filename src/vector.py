@@ -58,23 +58,33 @@ def intersect_circle(ray_origin, ray_direction, circle_origin, circle_radius):
     direc = np.array(ray_direction)
     p1 = p0 + direc
     oc = p0 - center
-    a = dist_sq(p0, p1)
-    b = np.dot(p1, oc)
-    c = dist_sq(p0, center) - circle_radius ** 2
-    disc = b ** 2 - (a * c)
+    a = np.dot(direc, direc)
+    b = np.dot(2 * direc, oc)
+    c = np.dot(oc, oc) - circle_radius ** 2
+    disc = b ** 2 - 4 * (a * c)
     if disc < 0:
         # no roots exist
-        return None
+        print("disc < 0", disc)
+        return []
 
     disc_root = math.sqrt(disc)
-    t0 = (-b + disc_root) / a
-    t1 = (-b - disc_root) / a
-    print(t0, t1)
+    t0 = (-b + disc_root) / (2 * a)
+    t1 = (-b - disc_root) / (2 * a)
+    print(a, b, disc_root, t0, t1)
 
     def point(t):
-        return direc * t + p0
+        return (direc) * t + p0
 
-    return (point(t0), point(t1))
+    i0 = point(t0)
+    i1 = point(t1)
+    if t0 >= 0 and t1 >= 0:
+        return [i0, i1]
+    elif t0 >= 0:
+        return [i0]
+    elif t1 >= 0:
+        return [i1]
+    else:
+        return []
 
 
 def intersect_ray_vector(rayOrigin, rayDirection, point1, point2):

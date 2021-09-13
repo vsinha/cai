@@ -140,39 +140,42 @@ def starburst(start, radius, num_lines, draw_only_collisions=False):
         else:
             draw_ray(start, direction, radius)
 
+    # draw_grid(10)
 
-# draw_grid(10)
+    # for i in range(0, 100):
+    #     starburst(
+    #         (int(random.uniform(0, width)), int(random.uniform(0, height))),
+    #         (random.uniform(10, 300)),
+    #         int(random.uniform(10, 100)),
+    #     )
 
-# for i in range(0, 100):
-#     starburst(
-#         (int(random.uniform(0, width)), int(random.uniform(0, height))),
-#         (random.uniform(10, 300)),
-#         int(random.uniform(10, 100)),
-#     )
+    # for i in range(0, 1000):
+    #     start = (int(random.uniform(0, width)), int(random.uniform(0, height)))
+    #     direction = vector.norm(np.array([random.uniform(0, 1), random.uniform(-1, 1)]))
+    #     max_length = 300
+    #     draw_ray_with_collisions(start, direction, max_length)
 
 
-# for i in range(0, 1000):
-#     start = (int(random.uniform(0, width)), int(random.uniform(0, height)))
-#     direction = vector.norm(np.array([random.uniform(0, 1), random.uniform(-1, 1)]))
-#     max_length = 300
-#     draw_ray_with_collisions(start, direction, max_length)
-circle_origin = (100, 100)
-circle_radius = 50
-ray_origin = (100, 100)
-ray_direction = (1, 0.25)
+for i in range(0, 10):
+    circle_origin = (200, h / 2)
+    circle_radius = 50
+    ray_origin = (20, h / 2)
+    ray_direction = (1, -0.5 + 0.08 * i)
 
-draw_circle(c, white, circle_origin, circle_radius, 2)
-draw_ray(ray_origin, ray_direction, 300)
-intersections = vector.intersect_circle(
-    ray_origin, ray_direction, circle_origin, circle_radius
-)
-print(intersections)
-
-if intersections:
-    blue = (0, 0, 1)
-    red = (1, 0, 0)
-    draw_circle(c, blue, intersections[0], 1, 10)
-    draw_circle(c, red, intersections[1], 1, 10)
+    draw_circle(c, white, circle_origin, circle_radius, 2)
+    draw_ray(ray_origin, ray_direction, 300)
+    intersections = vector.intersect_circle(
+        ray_origin, ray_direction, circle_origin, circle_radius
+    )
+    print(intersections)
+    if len(intersections) == 2:
+        blue = (0, 0, 1)
+        red = (1, 0, 0)
+        draw_circle(c, blue, intersections[0], 1, 10)
+        draw_circle(c, red, intersections[1], 1, 10)
+    elif len(intersections) == 1:
+        blue = (0, 0, 1)
+        draw_circle(c, blue, intersections[0], 1, 10)
 
 
 if __name__ == "__main__":
