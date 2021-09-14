@@ -23,68 +23,149 @@ def direction(start, end):
     return norm(np.array(end) - np.array(start))
 
 
-def intersect_circle(ray_origin, ray_direction, circle_origin, circle_radius):
+def intersect_line_with_circle_with_t(start, end, origin, radius):
     """
+    >>> origin = (0, 0)
+    >>> radius = 1
 
-    >>> line_start = (0,0)
-    >>> line_dir   = (1,0)
-    >>> circle_origin = (0,0)
-    >>> circle_radius = 10
-    >>> print(intersect_circle(line_start, line_dir, circle_origin, circle_radius))
-    (array([10.,  0.]), array([-10.,   0.]))
-    >>>
-    >>> # horizontal and vertical line centered at circle
-    >>> circle_origin = (0,0)
-    >>> circle_radius = 3
-    >>> line_start = (0,0)
-    >>> line_dir   = (1,0)
-    >>> print(intersect_circle(line_start, line_dir, circle_origin, circle_radius))
-    (array([3., 0.]), array([-3.,  0.]))
-    >>> line_start = (0,0)
-    >>> line_dir   = (0,1)
-    >>> print(intersect_circle(line_start, line_dir, circle_origin, circle_radius))
-    (array([0., 3.]), array([ 0., -3.]))
-    >>>
-    >>> # line outside the circle
-    >>> circle_origin = (0,0)
-    >>> circle_radius = 3
-    >>> line_start = (4,0)
-    >>> line_dir   = (0,1)
-    >>> print(intersect_circle(line_start, line_dir, circle_origin, circle_radius))
-    (array([3., 0.]), array([-3.,  0.]))
+    >>> # two
+    >>> start  = (0, 0)
+    >>> end    = (1, 0)
+    >>> print(intersect_line_with_circle_with_t(start, end, origin, radius))
+    [(-1.0, array([-1.,  0.])), (1.0, array([1., 0.]))]
+    >>> start  = (0, 0)
+    >>> end    = (1, 1)
+    >>> print(intersect_line_with_circle_with_t(start, end, origin, radius))
+    [(-0.7071067811865476, array([-0.70710678, -0.70710678])), (0.7071067811865476, array([0.70710678, 0.70710678]))]
+
+    >>> # none
+    >>> start  = (2, 0)
+    >>> end    = (2, 1)
+    >>> print(intersect_line_with_circle_with_t(start, end, origin, radius))
+    []
+
+    >>> # one
+    >>> start  = (0, 1)
+    >>> end    = (2, 1)
+    >>> print(intersect_line_with_circle_with_t(start, end, origin, radius))
+    [(0.0, array([0., 1.]))]
     """
-    center = np.array(circle_origin, dtype=float)
-    p0 = np.array(ray_origin)
-    direc = np.array(ray_direction)
-    p1 = p0 + direc
-    oc = p0 - center
+    center = np.array(origin, dtype=float)
+    start = np.array(start, dtype=float)
+    end = np.array(end, dtype=float)
+    direc = end - start
+
+    oc = start - center
     a = np.dot(direc, direc)
     b = np.dot(2 * direc, oc)
-    c = np.dot(oc, oc) - circle_radius ** 2
+    c = np.dot(oc, oc) - radius ** 2
     disc = b ** 2 - 4 * (a * c)
     if disc < 0:
-        # no roots exist
-        print("disc < 0", disc)
         return []
 
     disc_root = math.sqrt(disc)
     t0 = (-b + disc_root) / (2 * a)
     t1 = (-b - disc_root) / (2 * a)
-    print(a, b, disc_root, t0, t1)
+    # print(a, b, disc_root, t0, t1)
 
     def point(t):
-        return (direc) * t + p0
+        return (direc) * t + start
 
-    i0 = point(t0)
-    i1 = point(t1)
-    if t0 >= 0 and t1 >= 0:
-        return [i0, i1]
-    elif t0 >= 0:
-        return [i0]
-    elif t1 >= 0:
-        return [i1]
-    else:
-        return []
+    p0 = point(t0)
+    if t0 == t1:
+        return [(t0, p0)]
+
+    p1 = point(t1)
+    return [(t1, p1), (t0, p0)]
+
+
+def intersect_line_with_circle(start, end, origin, radius):
+    """
+    >>> origin = (0, 0)
+    >>> radius = 1
+
+    >>> # two
+    >>> start  = (0, 0)
+    >>> end    = (1, 0)
+    >>> print(intersect_line_with_circle(start, end, origin, radius))
+    [array([-1.,  0.]), array([1., 0.])]
+    >>> start  = (0, 0)
+    >>> end    = (1, 1)
+    >>> print(intersect_line_with_circle(start, end, origin, radius))
+    [array([-0.70710678, -0.70710678]), array([0.70710678, 0.70710678])]
+
+    >>> # none
+    >>> start  = (2, 0)
+    >>> end    = (2, 1)
+    >>> print(intersect_line_with_circle(start, end, origin, radius))
+    []
+
+    >>> # one
+    >>> start  = (0, 1)
+    >>> end    = (2, 1)
+    >>> print(intersect_line_with_circle(start, end, origin, radius))
+    [array([0., 1.])]
+    """
+    return [
+        p for (_, p) in intersect_line_with_circle_with_t(start, end, origin, radius)
+    ]
+
+
+def intersect_line_segment_with_circle(start, end, origin, radius):
+    """
+    >>> origin = (1, 0)
+    >>> radius = 1
+
+    >>> start  = (0, 0)
+    >>> end    = (2, 0)
+    >>> print(intersect_line_segment_with_circle(start, end, origin, radius))
+    [array([0., 0.]), array([2., 0.])]
+
+    >>> # one
+    >>> start  = (1, 0)
+    >>> end    = (1, 1)
+    >>> print(intersect_line_segment_with_circle(start, end, origin, radius))
+    [array([1., 1.])]
+    """
+    return [
+        p
+        for (t, p) in intersect_line_with_circle_with_t(start, end, origin, radius)
+        if t >= 0.0 and t <= 1.0
+    ]
+
+
+def intersect_ray_with_circle(start, direction, origin, radius):
+    """
+    >>> origin = (2, 0)
+    >>> radius = 1
+
+    >>> # two
+    >>> start  = (0, 0)
+    >>> direction    = (1, 0)
+    >>> print(intersect_ray_with_circle(start, direction, origin, radius))
+    [array([1., 0.]), array([3., 0.])]
+
+    >>> # none
+    >>> start  = (0, 2)
+    >>> direction    = (1, 0)
+    >>> print(intersect_ray_with_circle(start, direction, origin, radius))
+    []
+
+    >>> # one
+    >>> start  = (2, 0)
+    >>> direction    = (1, 1)
+    >>> print(intersect_ray_with_circle(start, direction, origin, radius))
+    [array([2.70710678, 0.70710678])]
+    """
+    center = np.array(origin, dtype=float)
+    start = np.array(start, dtype=float)
+    direc = np.array(direction, dtype=float)
+    end = start + direc
+    return [
+        point
+        for (t, point) in intersect_line_with_circle_with_t(start, end, origin, radius)
+        if t >= 0.0
+    ]
 
 
 def intersect_ray_vector(rayOrigin, rayDirection, point1, point2):
