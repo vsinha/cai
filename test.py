@@ -14,7 +14,12 @@ height = h = 500
 bg = (100 / 255.0, 80 / 255.0, 80 / 255.0)
 
 s = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-c = cairo.Context(s)
+ctx = cairo.Context(s)
+
+white = (1, 1, 1)
+blue = (0, 0, 1)
+red = (1, 0, 0)
+
 
 """
 # ctx.scale(width, height)  # Normalizing the canvas
@@ -33,32 +38,32 @@ ctx.stroke()
 """
 
 
-def draw_background(c, color, w, h):
-    c.set_source_rgb(*color)
-    c.rectangle(0, 0, w, h)
-    c.fill()
+def draw_background(color, w, h):
+    ctx.set_source_rgb(*color)
+    ctx.rectangle(0, 0, w, h)
+    ctx.fill()
 
 
-def draw_arc(c, color, origin, theta_1, theta_2, r, width):
-    c.set_source_rgb(*color)
-    c.set_line_width(width)
-    c.arc(origin[0], origin[1], r, theta_1, theta_2)
-    c.stroke()
+def draw_arc(color, origin, theta_1, theta_2, r, width):
+    ctx.set_source_rgb(*color)
+    ctx.set_line_width(width)
+    ctx.arc(origin[0], origin[1], r, theta_1, theta_2)
+    ctx.stroke()
 
 
-def draw_circle(c, color, origin, r, width):
-    draw_arc(c, color, origin, 0, 2 * math.pi, r, width)
+def draw_circle(color, origin, r, width):
+    draw_arc(color, origin, 0, 2 * math.pi, r, width)
 
 
-def draw_line(c, color, p1, p2, width):
-    c.set_source_rgb(*color)
-    c.set_line_width(width)
-    c.move_to(*p1)
-    c.line_to(*p2)
-    c.stroke()
+def draw_line(color, p1, p2, width):
+    ctx.set_source_rgb(*color)
+    ctx.set_line_width(width)
+    ctx.move_to(*p1)
+    ctx.line_to(*p2)
+    ctx.stroke()
 
 
-draw_background(c, bg, w, h)
+draw_background(bg, w, h)
 
 
 # for r in range(0, width , incr):
@@ -74,16 +79,60 @@ def draw_arc_lines(center, t1, t2, incr):
                 end = center[0] + (r + incr) * sin(theta), center[1] + (r + incr) * cos(
                     theta
                 )
-                draw_line(c, (1, 1, 1), start, end, 0.2)
+                draw_line((1, 1, 1), start, end, 0.2)
 
 
 # draw_arc_lines((0, 0), 0, 2 * pi, 200)
 # draw_arc_lines((w / 2, h / 2), 0, 2 * pi, 200)
 
-white = (1, 1, 1)
+
+def find_ray_collisions(start, direction, max_length=None):
+    intersects = []
+    for (p0, p1) in collidables:
+        found = vector.intersect_ray_vector(start, direction, p0, p1)
+        if len(found) > 0:
+            intersects.append(found[0])
+    length_and_end = [(vector.dist(start, end), end) for end in intersects]
+    if max_length is not None:
+        length_and_end = [
+            (length, end) for (length, end) in length_and_end if length < max_length
+        ]
+
+    return length_and_end.sort(key=lambda x: x[0])
 
 
-collidables = []
+class Collidables:
+    lines = []
+    circles = []
+
+    def add_line(self, start, end):
+        self.lines.append((start, end))
+
+    def add_circle(self, origin, radius):
+        self.circles.append((origin, radius))
+
+    def ray_intersections(self, start, direction, max_length=None):
+        intersects = []
+        # for (p0, p1) in self.lines:
+        #     intersects += vector.intersect_ray_vector(start, direction, p0, p1)
+
+        for (origin, radius) in self.circles:
+            intersects += vector.intersect_ray_with_circle(
+                start, direction, origin, radius
+            )
+
+        length_and_end = [(vector.dist(start, end), end) for end in intersects]
+        # print("line_and_len 0", line_and_len)
+        if max_length is not None:
+            length_and_end = [
+                (length, end) for (length, end) in length_and_end if length < max_length
+            ]
+
+        length_and_end.sort(key=lambda x: x[0])
+        return length_and_end
+
+
+collidables = Collidables()
 
 
 def draw_grid(num_bars):
@@ -95,41 +144,25 @@ def draw_grid(num_bars):
 
         start = (i, 0)
         end = (i, height)
-        draw_line(c, white, start, end, 0.5)
-        collidables.append((start, end))
+        draw_line(white, start, end, 0.5)
+        collidables.add_line(start, end)
 
         start = (0, i)
         end = (width, i)
-        draw_line(c, white, start, end, 0.5)
-        collidables.append((start, end))
+        draw_line(white, start, end, 0.5)
+        collidables.add_line(start, end)
 
 
 def draw_ray(start, direction, length):
     end = start + np.array(direction) * length
-    draw_line(c, white, start, end, 2)
-
-
-def find_ray_collisions(start, direction, max_length):
-    intersects = []
-    for (p0, p1) in collidables:
-        found = vector.intersect_ray_vector(start, direction, p0, p1)
-        if len(found) > 0:
-            # print("found", found[0])
-            intersects.append(found[0])
-    line_and_len = [(vector.dist(start, end), end) for end in intersects]
-    # print("line_and_len 0", line_and_len)
-    length_and_end = [
-        (length, end) for (length, end) in line_and_len if length < max_length
-    ]
-
-    return length_and_end.sort(key=lambda x: x[0])
+    draw_line(white, start, end, 2)
 
 
 def draw_ray_with_collisions(start, direction, max_length):
-    length_and_end = find_ray_collisions(start, direction, max_length)
-    if len(length_and_end) > 0:
+    length_and_end = collidables.ray_intersections(start, direction, max_length)
+    if length_and_end and len(length_and_end) > 0:
         end = length_and_end[0][1]
-        draw_line(c, white, start, end, 2)
+        draw_line(white, start, end, 2)
 
 
 def starburst(start, radius, num_lines, draw_only_collisions=False):
@@ -140,43 +173,75 @@ def starburst(start, radius, num_lines, draw_only_collisions=False):
         else:
             draw_ray(start, direction, radius)
 
-    # draw_grid(10)
 
-    # for i in range(0, 100):
-    #     starburst(
-    #         (int(random.uniform(0, width)), int(random.uniform(0, height))),
-    #         (random.uniform(10, 300)),
-    #         int(random.uniform(10, 100)),
-    #     )
+# draw_grid(10)
 
-    # for i in range(0, 1000):
-    #     start = (int(random.uniform(0, width)), int(random.uniform(0, height)))
-    #     direction = vector.norm(np.array([random.uniform(0, 1), random.uniform(-1, 1)]))
-    #     max_length = 300
-    #     draw_ray_with_collisions(start, direction, max_length)
+rows = 10
+for r in range(0, rows):
+    cols = 10
+    for c in range(0, cols):
+        circle_origin = (
+            (w / cols) * c + (w / (cols * 2)),
+            (h / rows) * r + (h / (rows * 2)),
+        )
+        circle_radius = 5
+        draw_circle(white, circle_origin, circle_radius, 2)
+        collidables.add_circle(circle_origin, circle_radius)
+
+    # ray_origin = (200, h / 2)
+    # ray_direction = (-1, -0.5 + 0.08 * i)
 
 
-for i in range(0, 10):
-    circle_origin = (200, h / 2)
-    circle_radius = 50
-    ray_origin = (20, h / 2)
-    ray_direction = (1, -0.5 + 0.08 * i)
-
-    draw_circle(c, white, circle_origin, circle_radius, 2)
-    draw_ray(ray_origin, ray_direction, 300)
-    intersections = vector.intersect_circle(
-        ray_origin, ray_direction, circle_origin, circle_radius
+for i in range(0, 5):
+    starburst(
+        (int(random.uniform(0, width)), int(random.uniform(0, height))),
+        (random.uniform(10, 300)),
+        int(random.uniform(10, 100)),
+        draw_only_collisions=True,
     )
-    print(intersections)
-    if len(intersections) == 2:
-        blue = (0, 0, 1)
-        red = (1, 0, 0)
-        draw_circle(c, blue, intersections[0], 1, 10)
-        draw_circle(c, red, intersections[1], 1, 10)
-    elif len(intersections) == 1:
-        blue = (0, 0, 1)
-        draw_circle(c, blue, intersections[0], 1, 10)
 
+# for i in range(0, 10):
+# start = (int(random.uniform(0, width)), int(random.uniform(0, height)))
+# direction = vector.norm(np.array([random.uniform(0, 1), random.uniform(-1, 1)]))
+# max_length = 300
+# start = (0, 0)
+# direction = (1, 1)
+# draw_ray_with_collisions(start, direction, max_length)
+
+
+# for i in range(0, 10):
+#     circle_origin = (w / 10 * i + w / 2, h / 2)
+#     circle_radius = 500
+#     ray_origin = (200, h / 2)
+#     ray_direction = (-1, -0.5 + 0.08 * i)
+
+#     draw_circle(c, white, circle_origin, circle_radius, 2)
+
+#     collidables.add_circle(circle_origin, circle_radius)
+
+# for i in range(0, 10):
+#     intersections = vector.intersect_ray_with_circle(
+#         ray_origin, ray_direction, circle_origin, circle_radius
+#     )
+#     print(intersections)
+#     if len(intersections) > 0:
+#         draw_line(c, white, ray_origin, intersections[0], 2)
+
+# if len(intersections) == 2:
+#     draw_circle(c, red, intersections[0], 1, 10)
+#     draw_circle(c, blue, intersections[1], 1, 10)
+#     draw_line(c, white, ray_origin, intersections[0], 2)
+# elif len(intersections) == 1:
+#     draw_circle(c, red, intersections[0], 1, 10)
+#     draw_line(c, white, ray_origin, intersections[0], 2)
+
+# for i in range(0, 10):
+#     starburst(
+#         (int(random.uniform(0, width)), int(random.uniform(0, height))),
+#         (random.uniform(10, 300)),
+#         int(random.uniform(10, 100)),
+#         draw_only_collisions=True,
+#     )
 
 if __name__ == "__main__":
     s.write_to_png("example.png")  # Output to PNG
