@@ -1,4 +1,5 @@
 import math
+from math import cos, sin
 
 import numpy as np
 
@@ -23,7 +24,24 @@ def direction(start, end):
     return norm(np.array(end) - np.array(start))
 
 
+def rotate(radians, vector):
+    rot = np.array([[cos(radians), -sin(radians)], [sin(radians), cos(radians)]])
+    return np.around(np.dot(rot, vector), 5)
+
+
+def rotate_deg(theta, vector):
+    """
+    >>> print(rotate_deg(90, (0, 1)))
+    [-1.  0.]
+    >>> print(rotate_deg(-45, (0, 1)))
+    [0.70711 0.70711]
+    """
+    return rotate(np.deg2rad(theta), vector)
+
+
 def intersect_line_with_circle_with_t(start, end, origin, radius):
+    # https://math.stackexchange.com/questions/311921/get-location-of-vector-circle-intersection
+    # https://bugfree.dk/blog/2018/09/03/ray-tracing-computing-ray-sphere-intersections
     """
     >>> origin = (0, 0)
     >>> radius = 1
@@ -69,7 +87,7 @@ def intersect_line_with_circle_with_t(start, end, origin, radius):
     # print(a, b, disc_root, t0, t1)
 
     def point(t):
-        return (direc) * t + start
+        return direc * t + start
 
     p0 = point(t0)
     if t0 == t1:
