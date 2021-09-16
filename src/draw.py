@@ -3,8 +3,8 @@ import math
 import cairo
 import numpy as np
 
-width = w = 500
-height = h = 500
+width = w = 2500
+height = h = 2500
 
 s = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
 ctx = cairo.Context(s)
