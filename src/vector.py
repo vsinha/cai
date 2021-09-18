@@ -187,6 +187,31 @@ def intersect_ray_with_circle(start, direction, origin, radius):
         if t >= 0.0
     ]
 
+def intersections_with_line_segments(origin, direction, segments):
+
+    if len(segments) == 0:
+        return []
+
+    o = np.array(origin)
+    d = np.array(direction)
+    ps = np.array(segments)
+
+    swapped = np.swapaxes(ps, 0, 1)
+    p0 = swapped[0]
+    p1 = swapped[1]
+
+    v1 = o - p0 
+    v2 = p1 - p0
+    v3 = np.array([-d[1], d[0]])
+
+    dot = np.dot(v2, v3)
+    t1 = np.cross(v2, v1) / dot
+    t2 = np.dot(v1, v3) / dot
+
+    t1[(t1 < 0) | (t2 > 1) | (t2 < 0) | (np.isclose(t1, 0.0)) | (np.isclose(t2, 0.0))] = np.nan
+
+    intersections = ((t1.reshape([-1, 1]) * d) + o)
+    return intersections
 
 def intersect_ray_vector(rayOrigin, rayDirection, point1, point2):
     """
