@@ -20,7 +20,6 @@ draw.background(bg)
 
 collidables = Collidables()
 
-
 def draw_arc_with_segmented_lines(center, t1, t2, incr):
     for _ in range(0, 100):
         for r in range(0, width - incr, incr):
@@ -51,7 +50,6 @@ def draw_grid_of_circles(rows):
 
 # draw_grid_of_circles(10)
 
-
 # for i in range(0, 5):
 #     draw.starburst(
 #         white,
@@ -65,11 +63,17 @@ def draw_grid_of_circles(rows):
 # Draw a line
 # starting from random points on that line, draw some new lines
 
+def is_np(a):
+    return 'numpy' in str(type(a))
 
 class Line:
     def __init__(self, start, end):
-        self.start = np.array(start, dtype=float)
-        self.end = np.array(end, dtype=float)
+        assert(is_np(start))
+        assert(is_np(end))
+        assert(len(start) == 2)
+        assert(len(end) == 2)
+        self.start = start
+        self.end = end
         self.direction = self.end - self.start
         self.direction_norm = vector.norm(self.direction)
 
@@ -78,13 +82,16 @@ class Line:
         return self.direction * t + self.start
 
     def draw(self):
-        draw.line(white, self.start, self.end, 2)
+        draw.line(white, self.start, self.end, 1)
+    
+    def __str__(self) -> str:
+        return (f"{self.start}, {self.end}")
 
     @staticmethod
     def create_random():
         return Line(
-            (random.uniform(0.25 * w, 0.75 * w), random.uniform(0.25 * h, 0.75 * h)),
-            (random.uniform(0.25 * w, 0.75 * w), random.uniform(0.25 * h, 0.75 * h)),
+            np.array((random.uniform(0.25 * w, 0.75 * w), random.uniform(0.25 * h, 0.75 * h))),
+            np.array((random.uniform(0.25 * w, 0.75 * w), random.uniform(0.25 * h, 0.75 * h))),
         )
 
     @staticmethod
@@ -92,31 +99,30 @@ class Line:
         if collisions:
             collisions = collidables.ray_intersections(start, direction, max_length)
             if len(collisions) > 0:
-                end = collisions[0][1]
+                end = collisions[0]
             else:
-                end = np.array(start) + np.array(direction) * max_length
+                end = start + direction * max_length
         else:
-            end = np.array(start) + np.array(direction) * max_length
-        # print("creating line", start, end)
-        return Line(start, end)
+            end = start + direction * max_length
+        return Line(np.array(start), np.array(end))
 
 
 # line = Line((100, 100), (200, 200))
 line = Line.create_random()
 line.draw()
-q = [(4, line)]
+q = [(6, line)]
 while len(q) > 0:
     rem, line = q.pop()
     for i in range(0, 10):
         p = line.p(random.uniform(0.0, 1.0))
-        rot = random.choice([-90, 90])
-        rot = random.choice([-60, 60])
+        deg = 60
+        # rot = random.choice([-90, 90])
+        rot = random.choice([-deg, deg])
         direction = vector.rotate_deg(rot, line.direction_norm)
-        # print("direction", direction)
         l = Line.create_ray(p, direction, max_length=200, collisions=True)
-        collidables.add_line(line)
+        collidables.add_line(l)
         l.draw()
-        if rem > 0 and random.uniform(0, 1) > 0.7:
+        if rem > 0 and random.uniform(0, 1) > 0.8:
             q.append((rem - 1, l))
 
 

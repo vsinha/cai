@@ -1,4 +1,5 @@
 import src.vector as vector
+import numpy as np
 
 
 class Collidables:
@@ -16,20 +17,16 @@ class Collidables:
         self.circles.append((origin, radius))
 
     def ray_intersections(self, start, direction, max_length=None):
-        intersects = []
 
-        vector.intersections_with_line_segments(start, direction, self.lines)
+        start = np.array(start)
+        lines = np.array(self.lines)
 
-        for (origin, radius) in self.circles:
-            intersects += vector.intersect_ray_with_circle(
-                start, direction, origin, radius
-            )
+        intersects = vector.intersections_with_line_segments(start, direction, lines)
+        intersects, distances = vector.dist_to_many_points(start, intersects)
 
-        length_and_end = [(vector.dist(start, end), end) for end in intersects]
-        if max_length is not None:
-            length_and_end = [
-                (length, end) for (length, end) in length_and_end if length < max_length
-            ]
+        # for (origin, radius) in self.circles:
+        #     intersects += vector.intersect_ray_with_circle(
+        #         start, direction, origin, radius
+        #     )
 
-        length_and_end.sort(key=lambda x: x[0])
-        return length_and_end
+        return intersects

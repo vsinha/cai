@@ -3,7 +3,7 @@ from math import cos, sin
 
 import numpy as np
 
-np.seterr(all="raise")
+# np.seterr(all="raise")
 
 
 def dist_sq(p0, p1):
@@ -188,7 +188,6 @@ def intersect_ray_with_circle(start, direction, origin, radius):
     ]
 
 def intersections_with_line_segments(origin, direction, segments):
-
     if len(segments) == 0:
         return []
 
@@ -208,10 +207,27 @@ def intersections_with_line_segments(origin, direction, segments):
     t1 = np.cross(v2, v1) / dot
     t2 = np.dot(v1, v3) / dot
 
+    # Check the collision is within the line segment and ahead of the ray
     t1[(t1 < 0) | (t2 > 1) | (t2 < 0) | (np.isclose(t1, 0.0)) | (np.isclose(t2, 0.0))] = np.nan
 
     intersections = ((t1.reshape([-1, 1]) * d) + o)
     return intersections
+
+def dist_to_many_points(origin, intersections):
+    if len(intersections) == 0:
+        return [], []
+
+    v = np.square(intersections - origin)
+    a, b = np.hsplit(v, [1])
+    dists = a - b
+    
+    # sort
+    d = np.append(intersections, dists, 1)
+    d = d[~np.isnan(d).any(axis=1)] # remove NaNs
+    d = d[d[:, 2].argsort()] # sort by distance
+    intersections, d = np.hsplit(d, [2])
+    
+    return intersections, d
 
 def intersect_ray_vector(rayOrigin, rayDirection, point1, point2):
     """
